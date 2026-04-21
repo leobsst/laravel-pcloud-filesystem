@@ -1,47 +1,114 @@
-# File system pCloud PHP SDK integration for Laravel-based application.
+# Laravel pCloud Filesystem
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/leobsst/laravel-pcloud-filesystem.svg?style=flat-square)](https://packagist.org/packages/leobsst/laravel-pcloud-filesystem)
 [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/leobsst/laravel-pcloud-filesystem/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/leobsst/laravel-pcloud-filesystem/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/leobsst/laravel-pcloud-filesystem/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/leobsst/laravel-pcloud-filesystem/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/leobsst/laravel-pcloud-filesystem.svg?style=flat-square)](https://packagist.org/packages/leobsst/laravel-pcloud-filesystem)
 
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
+A [Laravel](https://laravel.com) filesystem driver for [pCloud](https://www.pcloud.com), built on top of the [pCloud PHP SDK](https://github.com/pCloud/pcloud-sdk-php) and [Flysystem v3](https://flysystem.thephpleague.com). Exposes a `pcloud` disk driver that integrates seamlessly with `Storage::disk('pcloud')`.
 
-## Support us
+## Requirements
 
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/laravel-pcloud-filesystem.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/laravel-pcloud-filesystem)
-
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
-
-We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
+- PHP 8.2+
+- Laravel 11, 12, or 13
 
 ## Installation
 
-You can install the package via composer:
+Install the package via Composer:
 
 ```bash
 composer require leobsst/laravel-pcloud-filesystem
 ```
 
-You can publish the config file with:
+The service provider is auto-discovered — no manual registration needed.
 
-```bash
-php artisan vendor:publish --tag="pcloud-filesystem-config"
+## Configuration
+
+### 1. Obtain a pCloud access token
+
+Generate a token in your pCloud developer console or via the pCloud PHP SDK OAuth2 flow.
+
+### 2. Add environment variables
+
+Add the following to your `.env` file:
+
+```env
+PCLOUD_ACCESS_TOKEN=your-access-token-here
+PCLOUD_LOCATION_ID=1     # 1 = US servers, 2 = EU servers
+PCLOUD_ROOT=/            # Optional: root folder for all operations
 ```
 
-This is the contents of the published config file:
+### 3. Register the disk
+
+Add the `pcloud` entry to the `disks` array in `config/filesystems.php`:
 
 ```php
-return [
-];
+'disks' => [
+    // ...existing disks...
+
+    'pcloud' => [
+        'driver'       => 'pcloud',
+        'access_token' => env('PCLOUD_ACCESS_TOKEN'),
+        'location_id'  => env('PCLOUD_LOCATION_ID', 1),
+        'root'         => env('PCLOUD_ROOT', '/'),
+    ],
+],
 ```
+
+The `root` option scopes all filesystem operations to that pCloud folder. For example, setting `root` to `/MyApp` means `Storage::disk('pcloud')->put('uploads/file.txt', ...)` will write to `/MyApp/uploads/file.txt` on pCloud. Missing intermediate directories are created automatically.
 
 ## Usage
 
+Once configured, use the disk exactly like any other Laravel filesystem disk:
+
 ```php
-$laravelPcloudFilesystem = new Leobsst\LaravelPcloudFilesystem();
-echo $laravelPcloudFilesystem->echoPhrase('Hello, Leobsst!');
+use Illuminate\Support\Facades\Storage;
+
+// Write a file
+Storage::disk('pcloud')->put('hello.txt', 'Hello, pCloud!');
+
+// Write from a stream
+Storage::disk('pcloud')->writeStream('video.mp4', fopen('/path/to/video.mp4', 'rb'));
+
+// Check existence
+Storage::disk('pcloud')->exists('hello.txt');       // true
+Storage::disk('pcloud')->directoryExists('photos'); // true
+
+// Read a file
+$contents = Storage::disk('pcloud')->get('hello.txt');
+
+// Read as a stream
+$stream = Storage::disk('pcloud')->readStream('video.mp4');
+
+// List contents (non-recursive)
+$files = Storage::disk('pcloud')->files('photos');
+
+// List contents recursively
+$all = Storage::disk('pcloud')->allFiles('photos');
+
+// Move / rename
+Storage::disk('pcloud')->move('hello.txt', 'archive/hello.txt');
+
+// Copy
+Storage::disk('pcloud')->copy('hello.txt', 'backup/hello.txt');
+
+// Delete a file
+Storage::disk('pcloud')->delete('hello.txt');
+
+// Delete a directory and its contents
+Storage::disk('pcloud')->deleteDirectory('archive');
+
+// Create a directory
+Storage::disk('pcloud')->makeDirectory('new-folder');
+
+// File metadata
+Storage::disk('pcloud')->size('video.mp4');
+Storage::disk('pcloud')->lastModified('video.mp4');
+Storage::disk('pcloud')->mimeType('video.mp4');
 ```
+
+## Unsupported features
+
+**Visibility control** is not supported by pCloud. Calling `setVisibility()` always throws `UnableToSetVisibility`. The `visibility()` method always returns `public`.
 
 ## Testing
 
@@ -55,15 +122,16 @@ Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed re
 
 ## Contributing
 
-Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
+Please see [CONTRIBUTING](.github/CONTRIBUTING.md) for details.
 
-## Security Vulnerabilities
+## Security
 
-Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
+Please see [SECURITY](.github/SECURITY.md) for how to report security vulnerabilities.
 
 ## Credits
 
 - [LEOBSST](https://github.com/leobsst)
+- [B.L.A.M. PRODUCTION](https://blam-prod.fr)
 - [All Contributors](../../contributors)
 
 ## License
