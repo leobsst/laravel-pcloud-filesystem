@@ -5,6 +5,9 @@
     "keywords": [
         "LEOBSST",
         "laravel",
+        "pcloud",
+        "BLAM PRODUCTION",
+        "BL.A.M. PRODUCTION",
         "laravel-pcloud-filesystem"
     ],
     "homepage": "https://github.com/leobsst/laravel-pcloud-filesystem",
@@ -29,13 +32,15 @@
     ],
     "require": {
         "php": "^8.2",
-        "spatie/laravel-package-tools": "^1.16",
-        "illuminate/contracts": "^11.0||^12.0||^13.0"
+        "illuminate/contracts": "^11.0||^12.0||^13.0",
+        "league/flysystem": "^3.0",
+        "pcloud/pcloud-php-sdk": "^3.0",
+        "spatie/laravel-package-tools": "^1.16"
     },
     "require-dev": {
+        "larastan/larastan": "^3.0",
         "laravel/pint": "^1.14",
         "nunomaduro/collision": "^8.8",
-        "larastan/larastan": "^3.0",
         "orchestra/testbench": "^10.0.0||^9.0.0",
         "pestphp/pest": "^4.0",
         "pestphp/pest-plugin-arch": "^4.0",
