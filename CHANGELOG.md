@@ -2,6 +2,15 @@
 
 All notable changes to `laravel-pcloud-filesystem` will be documented in this file.
 
+## v1.0.2 - 2026-04-23
+
+### What's changed
+
+- **Public URL support** — `Storage::disk('pcloud')->url('path/to/file')` now resolves via pCloud's `getfilepublink` API instead of throwing a `RuntimeException`.
+- **Temporary URL support** — `Storage::disk('pcloud')->temporaryUrl('path/to/file', $expiration)` generates an expiring public link by passing the expiration Unix timestamp to `getfilepublink`.
+
+**Full Changelog**: https://github.com/leobsst/laravel-pcloud-filesystem/compare/v1.0.1...v1.0.2
+
 ## v1.0.1 - 2026-04-23
 
 ### What's changed
