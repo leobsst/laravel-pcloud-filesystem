@@ -1,7 +1,7 @@
 # Laravel pCloud Filesystem
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/leobsst/laravel-pcloud-filesystem.svg?style=flat-square)](https://packagist.org/packages/leobsst/laravel-pcloud-filesystem)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/leobsst/laravel-pcloud-filesystem/run-tests.yml?branch=1.x&label=tests&style=flat-square)](https://github.com/leobsst/laravel-pcloud-filesystem/actions?query=workflow%3Arun-tests+branch%3Amain)
+[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/leobsst/laravel-pcloud-filesystem/run-tests.yml?branch=1.x&label=tests&style=flat-square)](https://github.com/leobsst/laravel-pcloud-filesystem/actions?query=workflow%3Arun-tests+branch%3A1.x)
 [![Total Downloads](https://img.shields.io/packagist/dt/leobsst/laravel-pcloud-filesystem.svg?style=flat-square)](https://packagist.org/packages/leobsst/laravel-pcloud-filesystem)
 [![License](https://img.shields.io/badge/license-MIT-green.svg
 )](https://opensource.org/licenses/MIT)
