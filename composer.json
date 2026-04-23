@@ -33,6 +33,7 @@
     "require": {
         "php": "^8.2",
         "illuminate/contracts": "^11.0||^12.0||^13.0",
+        "illuminate/http": "^11.0||^12.0||^13.0",
         "league/flysystem": "^3.0",
         "pcloud/pcloud-php-sdk": "^3.0",
         "spatie/laravel-package-tools": "^1.16"
@@ -79,9 +80,7 @@
             "providers": [
                 "Leobsst\\LaravelPcloudFilesystem\\LaravelPcloudFilesystemServiceProvider"
             ],
-            "aliases": {
-                "LaravelPcloudFilesystem": "Leobsst\\LaravelPcloudFilesystem\\Facades\\LaravelPcloudFilesystem"
-            }
+            "aliases": {}
         }
     },
     "minimum-stability": "stable",

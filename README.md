@@ -27,13 +27,34 @@ The service provider is auto-discovered — no manual registration needed.
 
 ## Configuration
 
-### 1. Obtain a pCloud access token
+### Option A — Interactive setup (recommended)
 
-Generate a token in your pCloud developer console or via the pCloud PHP SDK OAuth2 flow.
+Run the install command. It will guide you through the OAuth2 flow and write the credentials directly to your `.env`:
 
-### 2. Add environment variables
+```bash
+php artisan pcloud-filesystem:install
+```
 
-Add the following to your `.env` file:
+Or run the configure command standalone (useful when adding a second pCloud disk with a prefix):
+
+```bash
+php artisan pcloud-filesystem:configure
+```
+
+The command will:
+
+1. Ask for an optional **environment variable prefix** (e.g. `BACKUP` → `BACKUP_PCLOUD_ACCESS_TOKEN`). Leave empty for the default `PCLOUD_*` names.
+2. Ask for your pCloud **client_id** and **client_secret** (obtained from the [pCloud developer console](https://docs.pcloud.com/methods/intro/getting_started.html)).
+3. Open a browser authorization URL — after you approve, copy the `code` from the redirect URL.
+4. Exchange the code for an access token and write `PCLOUD_ACCESS_TOKEN`, `PCLOUD_LOCATION_ID`, and `PCLOUD_ROOT` to your `.env`. If a variable already exists you will be asked whether to override it.
+
+### Option B — Manual setup
+
+**1. Obtain a pCloud access token**
+
+Create an app in the [pCloud developer console](https://docs.pcloud.com/methods/intro/getting_started.html) and complete the OAuth2 flow to obtain an access token.
+
+**2. Add environment variables**
 
 ```env
 PCLOUD_ACCESS_TOKEN=your-access-token-here
@@ -41,7 +62,7 @@ PCLOUD_LOCATION_ID=1     # 1 = US servers, 2 = EU servers
 PCLOUD_ROOT=/            # Optional: root folder for all operations
 ```
 
-### 3. Register the disk
+**3. Register the disk**
 
 Add the `pcloud` entry to the `disks` array in `config/filesystems.php`:
 
@@ -55,6 +76,26 @@ Add the `pcloud` entry to the `disks` array in `config/filesystems.php`:
         'location_id'  => env('PCLOUD_LOCATION_ID', 1),
         'root'         => env('PCLOUD_ROOT', '/'),
     ],
+],
+```
+
+### Multiple disks / prefix
+
+If you need more than one pCloud disk (e.g. a primary and a backup), run `pcloud-filesystem:configure` a second time and supply a prefix when prompted:
+
+```bash
+php artisan pcloud-filesystem:configure
+# prefix: BACKUP
+```
+
+This produces `BACKUP_PCLOUD_ACCESS_TOKEN`, `BACKUP_PCLOUD_LOCATION_ID`, and `BACKUP_PCLOUD_ROOT`, which you then wire up as a second disk in `config/filesystems.php`:
+
+```php
+'pcloud-backup' => [
+    'driver'       => 'pcloud',
+    'access_token' => env('BACKUP_PCLOUD_ACCESS_TOKEN'),
+    'location_id'  => env('BACKUP_PCLOUD_LOCATION_ID', 1),
+    'root'         => env('BACKUP_PCLOUD_ROOT', '/'),
 ],
 ```
 
