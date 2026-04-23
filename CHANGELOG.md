@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-pcloud-filesystem` will be documented in this file.
 
+## v1.0.1 - 2026-04-23
+
+### What's changed
+
+* Handle European API in authorization flow
+
+**Full Changelog**: https://github.com/leobsst/laravel-pcloud-filesystem/compare/v1.0.0...v1.0.1
+
 ## v1.0.0 — First Release! - 2026-04-23
 
 ### Features
