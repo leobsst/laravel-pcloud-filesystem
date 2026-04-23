@@ -3,6 +3,10 @@
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/leobsst/laravel-pcloud-filesystem.svg?style=flat-square)](https://packagist.org/packages/leobsst/laravel-pcloud-filesystem)
 [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/leobsst/laravel-pcloud-filesystem/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/leobsst/laravel-pcloud-filesystem/actions?query=workflow%3Arun-tests+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/leobsst/laravel-pcloud-filesystem.svg?style=flat-square)](https://packagist.org/packages/leobsst/laravel-pcloud-filesystem)
+[![License](https://img.shields.io/badge/license-MIT-green.svg
+)](https://opensource.org/licenses/MIT)
+[![Laravel](https://img.shields.io/badge/Laravel-11.0%20|%2012.0%20|%2013.0-FF2D20?logo=laravel)](https://laravel.com)
+[![PHP](https://img.shields.io/badge/PHP-8.2+-777BB4?logo=php)](https://www.php.net)
 
 A [Laravel](https://laravel.com) filesystem driver for [pCloud](https://www.pcloud.com), built on top of the [pCloud PHP SDK](https://github.com/pCloud/pcloud-sdk-php) and [Flysystem v3](https://flysystem.thephpleague.com). Exposes a `pcloud` disk driver that integrates seamlessly with `Storage::disk('pcloud')`.
 
