@@ -552,15 +552,21 @@ describe('visibility', function () {
 });
 
 describe('getUrl', function () {
-    it('returns the public link from getfilepublink', function () {
-        $resp = new stdClass;
-        $resp->link = 'https://u.pcloud.link/publink/show?code=abc123';
+    it('returns a direct file URL by chaining getfilepublink and getpublinkdownload', function () {
+        $publink = new stdClass;
+        $publink->code = 'abc123';
 
-        $req = fakeRequest()->onGet('getfilepublink', ['path' => '/root/image.jpg'], $resp);
+        $download = new stdClass;
+        $download->hosts = ['cdn1.pcloud.com', 'cdn2.pcloud.com'];
+        $download->path = '/DLxxx/image.jpg';
+
+        $req = fakeRequest()
+            ->onGet('getfilepublink', ['path' => '/root/image.jpg'], $publink)
+            ->onGet('getpublinkdownload', ['code' => 'abc123'], $download);
 
         $url = pcloudAdapter($req, '/root')->getUrl('image.jpg');
 
-        expect($url)->toBe('https://u.pcloud.link/publink/show?code=abc123');
+        expect($url)->toBe('https://cdn1.pcloud.com/DLxxx/image.jpg');
     });
 
     it('throws RuntimeException when getfilepublink fails', function () {
@@ -569,29 +575,61 @@ describe('getUrl', function () {
         expect(fn () => pcloudAdapter($req, '/root')->getUrl('image.jpg'))
             ->toThrow(RuntimeException::class, 'Unable to get public URL for: image.jpg');
     });
+
+    it('throws RuntimeException when getpublinkdownload fails', function () {
+        $publink = new stdClass;
+        $publink->code = 'abc123';
+
+        $req = fakeRequest()
+            ->onGet('getfilepublink', ['path' => '/root/image.jpg'], $publink)
+            ->onGet('getpublinkdownload', ['code' => 'abc123'], new PcloudException('Download failed'));
+
+        expect(fn () => pcloudAdapter($req, '/root')->getUrl('image.jpg'))
+            ->toThrow(RuntimeException::class, 'Unable to get public URL for: image.jpg');
+    });
 });
 
 describe('getTemporaryUrl', function () {
-    it('passes the expiration timestamp to getfilepublink and returns the link', function () {
+    it('passes the expiration timestamp to getfilepublink and returns a direct file URL', function () {
         $expiration = new DateTimeImmutable('2026-12-31 23:59:59', new DateTimeZone('UTC'));
 
-        $resp = new stdClass;
-        $resp->link = 'https://u.pcloud.link/publink/show?code=tmp456';
+        $publink = new stdClass;
+        $publink->code = 'tmp456';
 
-        $req = fakeRequest()->onGet('getfilepublink', [
-            'path' => '/root/image.jpg',
-            'expire' => $expiration->getTimestamp(),
-        ], $resp);
+        $download = new stdClass;
+        $download->hosts = ['cdn1.pcloud.com'];
+        $download->path = '/DLyyy/image.jpg';
+
+        $req = fakeRequest()
+            ->onGet('getfilepublink', [
+                'path' => '/root/image.jpg',
+                'expire' => $expiration->getTimestamp(),
+            ], $publink)
+            ->onGet('getpublinkdownload', ['code' => 'tmp456'], $download);
 
         $url = pcloudAdapter($req, '/root')->getTemporaryUrl('image.jpg', $expiration);
 
-        expect($url)->toBe('https://u.pcloud.link/publink/show?code=tmp456');
+        expect($url)->toBe('https://cdn1.pcloud.com/DLyyy/image.jpg');
     });
 
     it('throws RuntimeException when getfilepublink fails', function () {
         $expiration = new DateTimeImmutable('+1 hour');
 
         $req = fakeRequest()->onAnyGet('getfilepublink', new PcloudException('Access denied'));
+
+        expect(fn () => pcloudAdapter($req, '/root')->getTemporaryUrl('image.jpg', $expiration))
+            ->toThrow(RuntimeException::class, 'Unable to get temporary URL for: image.jpg');
+    });
+
+    it('throws RuntimeException when getpublinkdownload fails', function () {
+        $expiration = new DateTimeImmutable('+1 hour');
+
+        $publink = new stdClass;
+        $publink->code = 'tmp456';
+
+        $req = fakeRequest()
+            ->onAnyGet('getfilepublink', $publink)
+            ->onGet('getpublinkdownload', ['code' => 'tmp456'], new PcloudException('Download failed'));
 
         expect(fn () => pcloudAdapter($req, '/root')->getTemporaryUrl('image.jpg', $expiration))
             ->toThrow(RuntimeException::class, 'Unable to get temporary URL for: image.jpg');
