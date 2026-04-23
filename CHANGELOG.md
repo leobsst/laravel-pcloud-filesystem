@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-pcloud-filesystem` will be documented in this file.
 
+## v1.0.3 - 2026-04-23
+
+### Fixed
+
+- `getUrl()` and `getTemporaryUrl()` now return a direct file URL instead of the pCloud viewer page (`e.pcloud.link/publink/show`). The fix chains `getfilepublink` with `getpublinkdownload` to resolve the actual downloadable file URL (`https://host/path`).
+
+**Full Changelog**: https://github.com/leobsst/laravel-pcloud-filesystem/compare/v1.0.2...v1.0.3
+
 ## v1.0.2 - 2026-04-23
 
 ### What's changed
