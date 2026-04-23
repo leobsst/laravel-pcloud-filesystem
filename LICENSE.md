@@ -1,6 +1,6 @@
 The MIT License (MIT)
 
-Copyright (c) LEOBSST <contact@leobsst.fr>
+Copyright (c) LEOBSST & B.L.A.M. PRODUCTION <contact@leobsst.fr>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
