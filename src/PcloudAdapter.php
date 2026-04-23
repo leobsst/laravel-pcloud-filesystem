@@ -197,6 +197,31 @@ class PcloudAdapter implements FilesystemAdapter
         ]);
     }
 
+    public function getUrl(string $path): string
+    {
+        try {
+            $response = $this->request->get('getfilepublink', ['path' => $this->fullPath($path)]);
+
+            return $response->link;
+        } catch (Throwable $e) {
+            throw new \RuntimeException("Unable to get public URL for: {$path}", 0, $e);
+        }
+    }
+
+    public function getTemporaryUrl(string $path, \DateTimeInterface $expiration, array $options = []): string
+    {
+        try {
+            $response = $this->request->get('getfilepublink', [
+                'path' => $this->fullPath($path),
+                'expire' => $expiration->getTimestamp(),
+            ]);
+
+            return $response->link;
+        } catch (Throwable $e) {
+            throw new \RuntimeException("Unable to get temporary URL for: {$path}", 0, $e);
+        }
+    }
+
     public function fileExists(string $path): bool
     {
         try {

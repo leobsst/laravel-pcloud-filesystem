@@ -550,3 +550,50 @@ describe('visibility', function () {
             ->toThrow(UnableToSetVisibility::class);
     });
 });
+
+describe('getUrl', function () {
+    it('returns the public link from getfilepublink', function () {
+        $resp = new stdClass;
+        $resp->link = 'https://u.pcloud.link/publink/show?code=abc123';
+
+        $req = fakeRequest()->onGet('getfilepublink', ['path' => '/root/image.jpg'], $resp);
+
+        $url = pcloudAdapter($req, '/root')->getUrl('image.jpg');
+
+        expect($url)->toBe('https://u.pcloud.link/publink/show?code=abc123');
+    });
+
+    it('throws RuntimeException when getfilepublink fails', function () {
+        $req = fakeRequest()->onGet('getfilepublink', ['path' => '/root/image.jpg'], new PcloudException('Access denied'));
+
+        expect(fn () => pcloudAdapter($req, '/root')->getUrl('image.jpg'))
+            ->toThrow(RuntimeException::class, 'Unable to get public URL for: image.jpg');
+    });
+});
+
+describe('getTemporaryUrl', function () {
+    it('passes the expiration timestamp to getfilepublink and returns the link', function () {
+        $expiration = new DateTimeImmutable('2026-12-31 23:59:59', new DateTimeZone('UTC'));
+
+        $resp = new stdClass;
+        $resp->link = 'https://u.pcloud.link/publink/show?code=tmp456';
+
+        $req = fakeRequest()->onGet('getfilepublink', [
+            'path' => '/root/image.jpg',
+            'expire' => $expiration->getTimestamp(),
+        ], $resp);
+
+        $url = pcloudAdapter($req, '/root')->getTemporaryUrl('image.jpg', $expiration);
+
+        expect($url)->toBe('https://u.pcloud.link/publink/show?code=tmp456');
+    });
+
+    it('throws RuntimeException when getfilepublink fails', function () {
+        $expiration = new DateTimeImmutable('+1 hour');
+
+        $req = fakeRequest()->onAnyGet('getfilepublink', new PcloudException('Access denied'));
+
+        expect(fn () => pcloudAdapter($req, '/root')->getTemporaryUrl('image.jpg', $expiration))
+            ->toThrow(RuntimeException::class, 'Unable to get temporary URL for: image.jpg');
+    });
+});
