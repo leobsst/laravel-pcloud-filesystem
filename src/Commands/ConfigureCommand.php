@@ -48,7 +48,7 @@ class ConfigureCommand extends Command
         $this->newLine();
         $this->line('  ' . $this->oauthClient->getAuthorizeUrl($clientId));
         $this->newLine();
-        $this->line('After authorization, pCloud will redirect you. Copy the <info>code</info> from the redirect URL query string.');
+        $this->line('After authorization, pCloud will redirect you. Copy the <info>code</info> and <info>locationid</info> from the redirect URL query string.');
         $this->newLine();
 
         $code = (string) $this->ask('Paste the authorization code here');
@@ -59,10 +59,12 @@ class ConfigureCommand extends Command
             return self::FAILURE;
         }
 
+        $locationId = (int) $this->ask('Paste the locationid from the redirect URL (1 = US, 2 = EU)', '1');
+
         $this->line('Exchanging code for access token...');
 
         try {
-            $result = $this->oauthClient->fetchToken($clientId, $clientSecret, $code);
+            $result = $this->oauthClient->fetchToken($clientId, $clientSecret, $code, $locationId);
         } catch (RuntimeException $e) {
             $this->error($e->getMessage());
 

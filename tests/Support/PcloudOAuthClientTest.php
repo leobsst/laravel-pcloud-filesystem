@@ -35,7 +35,7 @@ describe('PcloudOAuthClient', function () {
                 ]),
             ]);
 
-            $result = (new PcloudOAuthClient)->fetchToken('cid', 'csecret', 'authcode');
+            $result = (new PcloudOAuthClient)->fetchToken('cid', 'csecret', 'authcode', locationId: 1);
 
             expect($result)->toBeInstanceOf(OAuthResult::class);
             expect($result->accessToken)->toBe('tok_abc');
@@ -50,9 +50,39 @@ describe('PcloudOAuthClient', function () {
                 ]),
             ]);
 
-            $result = (new PcloudOAuthClient)->fetchToken('cid', 'csecret', 'code');
+            $result = (new PcloudOAuthClient)->fetchToken('cid', 'csecret', 'code', locationId: 1);
 
             expect($result->locationId)->toBe(1);
+        });
+
+        it('uses the US endpoint when locationId is 1', function () {
+            Http::fake([
+                'api.pcloud.com/oauth2_token*' => Http::response(['result' => 0, 'access_token' => 'tok']),
+            ]);
+
+            (new PcloudOAuthClient)->fetchToken('cid', 'csecret', 'code', locationId: 1);
+
+            Http::assertSent(fn ($request) => str_contains($request->url(), 'api.pcloud.com'));
+        });
+
+        it('uses the EU endpoint when locationId is 2', function () {
+            Http::fake([
+                'eapi.pcloud.com/oauth2_token*' => Http::response(['result' => 0, 'access_token' => 'tok']),
+            ]);
+
+            (new PcloudOAuthClient)->fetchToken('cid', 'csecret', 'code', locationId: 2);
+
+            Http::assertSent(fn ($request) => str_contains($request->url(), 'eapi.pcloud.com'));
+        });
+
+        it('falls back to the US endpoint for an unknown locationId', function () {
+            Http::fake([
+                'api.pcloud.com/oauth2_token*' => Http::response(['result' => 0, 'access_token' => 'tok']),
+            ]);
+
+            (new PcloudOAuthClient)->fetchToken('cid', 'csecret', 'code', locationId: 99);
+
+            Http::assertSent(fn ($request) => str_contains($request->url(), 'api.pcloud.com'));
         });
 
         it('throws RuntimeException on HTTP failure', function () {

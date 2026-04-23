@@ -11,7 +11,10 @@ class PcloudOAuthClient
 {
     private const AUTHORIZE_URL = 'https://my.pcloud.com/oauth2/authorize';
 
-    private const TOKEN_URL = 'https://api.pcloud.com/oauth2_token';
+    private const TOKEN_URLS = [
+        1 => 'https://api.pcloud.com/oauth2_token',
+        2 => 'https://eapi.pcloud.com/oauth2_token',
+    ];
 
     public function getAuthorizeUrl(string $clientId): string
     {
@@ -21,9 +24,11 @@ class PcloudOAuthClient
     /**
      * @throws RuntimeException
      */
-    public function fetchToken(string $clientId, string $clientSecret, string $code): OAuthResult
+    public function fetchToken(string $clientId, string $clientSecret, string $code, int $locationId = 1): OAuthResult
     {
-        $response = Http::get(self::TOKEN_URL, [
+        $tokenUrl = self::TOKEN_URLS[$locationId] ?? self::TOKEN_URLS[1];
+
+        $response = Http::get($tokenUrl, [
             'client_id' => $clientId,
             'client_secret' => $clientSecret,
             'code' => $code,
