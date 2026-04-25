@@ -36,6 +36,10 @@ class EnvWriter
 
                 $contents = preg_replace($pattern, $key . '=' . $escaped, $contents);
             } else {
+                if (current($contents) !== false && ! str_ends_with($contents, "\n")) {
+                    $contents .= "\n";
+                }
+
                 $contents = rtrim((string) $contents) . "\n" . $key . '=' . $escaped . "\n";
             }
 

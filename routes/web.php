@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
+use Leobsst\LaravelPcloudFilesystem\Support\DiskConfig;
 
 foreach (config('filesystems.disks', []) as $diskName => $diskConfig) {
-    if (($diskConfig['driver'] ?? '') !== 'pcloud' || isset($diskConfig['url'])) {
+    if (! DiskConfig::fromConfig($diskName, $diskConfig)->canDefineProxyRoute()) {
         continue;
     }
 

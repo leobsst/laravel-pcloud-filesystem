@@ -9,6 +9,8 @@ use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Storage;
 use League\Flysystem\Filesystem;
 use Leobsst\LaravelPcloudFilesystem\Commands\ConfigureCommand;
+use Leobsst\LaravelPcloudFilesystem\Enums\LocationEnum;
+use Leobsst\LaravelPcloudFilesystem\Support\DiskConfig;
 use Leobsst\LaravelPcloudFilesystem\Support\EnvWriter;
 use Leobsst\LaravelPcloudFilesystem\Support\PcloudOAuthClient;
 use pCloud\Sdk\App;
@@ -24,7 +26,7 @@ class LaravelPcloudFilesystemServiceProvider extends PackageServiceProvider
         $package
             ->name('laravel-pcloud-filesystem')
             ->hasCommand(ConfigureCommand::class)
-            ->hasRoutes('web')
+            ->hasRoute('web')
             ->hasInstallCommand(function (InstallCommand $command) {
                 $command
                     ->startWith(fn (InstallCommand $cmd) => $cmd->call('pcloud-filesystem:configure'))
@@ -44,7 +46,9 @@ class LaravelPcloudFilesystemServiceProvider extends PackageServiceProvider
         // routes/web.php registers. This happens before the factory is called so that
         // FilesystemAdapter picks up the url when Storage::disk() is first resolved.
         foreach (config('filesystems.disks', []) as $diskName => $diskConfig) {
-            if (($diskConfig['driver'] ?? '') !== 'pcloud' || isset($diskConfig['url'])) {
+            $config = DiskConfig::fromConfig($diskName, $diskConfig);
+
+            if ($config->isPcloudDisk() || $config->hasUrl()) {
                 continue;
             }
 
@@ -53,8 +57,9 @@ class LaravelPcloudFilesystemServiceProvider extends PackageServiceProvider
 
         Storage::extend('pcloud', function (Application $app, array $config): FilesystemAdapter {
             $pcloudApp = new App;
+            $location = DiskConfig::parseLocation($config['location_id'] ?? LocationEnum::US);
             $pcloudApp->setAccessToken($config['access_token'] ?? '');
-            $pcloudApp->setLocationId($config['location_id'] ?? 1);
+            $pcloudApp->setLocationId($location->value);
 
             $adapter = new PcloudAdapter(new Request($pcloudApp), $config['root'] ?? '/');
             $filesystem = new Filesystem($adapter);

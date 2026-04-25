@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Leobsst\LaravelPcloudFilesystem\Commands;
 
 use Illuminate\Console\Command;
+use Leobsst\LaravelPcloudFilesystem\Enums\LocationEnum;
 use Leobsst\LaravelPcloudFilesystem\Support\EnvWriter;
 use Leobsst\LaravelPcloudFilesystem\Support\PcloudOAuthClient;
 use RuntimeException;
@@ -32,12 +33,12 @@ class ConfigureCommand extends Command
             $prefix = strtoupper(trim((string) $prefix, '_'));
         }
 
-        $envPrefix = $prefix !== '' ? $prefix . '_' : '';
+        $envPrefix = ! empty($prefix) ? $prefix . '_' : '';
 
         $clientId = (string) $this->ask('pCloud OAuth2 client_id');
         $clientSecret = (string) $this->ask('pCloud OAuth2 client_secret');
 
-        if ($clientId === '' || $clientSecret === '') {
+        if (empty($clientId) || empty($clientSecret)) {
             $this->error('client_id and client_secret are required.');
 
             return self::FAILURE;
@@ -53,18 +54,25 @@ class ConfigureCommand extends Command
 
         $code = (string) $this->ask('Paste the authorization code here');
 
-        if ($code === '') {
+        if (empty($code)) {
             $this->error('Authorization code is required.');
 
             return self::FAILURE;
         }
 
         $locationId = (int) $this->ask('Paste the locationid from the redirect URL (1 = US, 2 = EU)', '1');
+        $location = LocationEnum::tryFrom($locationId);
+
+        if ($location === null) {
+            $this->error('Invalid locationid. Must be 1 (US) or 2 (EU).');
+
+            return self::FAILURE;
+        }
 
         $this->line('Exchanging code for access token...');
 
         try {
-            $result = $this->oauthClient->fetchToken($clientId, $clientSecret, $code, $locationId);
+            $result = $this->oauthClient->fetchToken($clientId, $clientSecret, $code, $location);
         } catch (RuntimeException $e) {
             $this->error($e->getMessage());
 
@@ -75,7 +83,7 @@ class ConfigureCommand extends Command
 
         $vars = [
             "{$envPrefix}PCLOUD_ACCESS_TOKEN" => $result->accessToken,
-            "{$envPrefix}PCLOUD_LOCATION_ID" => (string) $result->locationId,
+            "{$envPrefix}PCLOUD_LOCATION_ID" => (string) $result->location->value,
             "{$envPrefix}PCLOUD_ROOT" => $root,
         ];
 
@@ -89,6 +97,8 @@ class ConfigureCommand extends Command
 
         $this->writeWithConfirmation($envPath, $vars);
 
+        $locationEnumClass = LocationEnum::class;
+
         $this->newLine();
         $this->info('pCloud credentials written to .env successfully!');
         $this->newLine();
@@ -97,7 +107,7 @@ class ConfigureCommand extends Command
         $this->line("  'pcloud' => [");
         $this->line("      'driver'       => 'pcloud',");
         $this->line("      'access_token' => env('{$envPrefix}PCLOUD_ACCESS_TOKEN'),");
-        $this->line("      'location_id'  => env('{$envPrefix}PCLOUD_LOCATION_ID', 1),");
+        $this->line("      'location_id'  => env('{$envPrefix}PCLOUD_LOCATION_ID', {$locationEnumClass}::US),");
         $this->line("      'root'         => env('{$envPrefix}PCLOUD_ROOT', '/'),");
         $this->line('  ],');
         $this->newLine();

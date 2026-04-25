@@ -5,16 +5,12 @@ declare(strict_types=1);
 namespace Leobsst\LaravelPcloudFilesystem\Support;
 
 use Illuminate\Support\Facades\Http;
+use Leobsst\LaravelPcloudFilesystem\Enums\LocationEnum;
 use RuntimeException;
 
 class PcloudOAuthClient
 {
     private const AUTHORIZE_URL = 'https://my.pcloud.com/oauth2/authorize';
-
-    private const TOKEN_URLS = [
-        1 => 'https://api.pcloud.com/oauth2_token',
-        2 => 'https://eapi.pcloud.com/oauth2_token',
-    ];
 
     public function getAuthorizeUrl(string $clientId): string
     {
@@ -24,11 +20,9 @@ class PcloudOAuthClient
     /**
      * @throws RuntimeException
      */
-    public function fetchToken(string $clientId, string $clientSecret, string $code, int $locationId = 1): OAuthResult
+    public function fetchToken(string $clientId, string $clientSecret, string $code, LocationEnum $location): OAuthResult
     {
-        $tokenUrl = self::TOKEN_URLS[$locationId] ?? self::TOKEN_URLS[1];
-
-        $response = Http::get($tokenUrl, [
+        $response = Http::get($location->tokenUrl(), [
             'client_id' => $clientId,
             'client_secret' => $clientSecret,
             'code' => $code,
@@ -40,7 +34,7 @@ class PcloudOAuthClient
 
         $data = $response->json();
 
-        if (! is_array($data)) {
+        if (! \is_array($data)) {
             throw new RuntimeException('Invalid JSON response from pCloud token endpoint.');
         }
 
@@ -52,7 +46,7 @@ class PcloudOAuthClient
 
         return new OAuthResult(
             accessToken: (string) $data['access_token'],
-            locationId: (int) ($data['locationid'] ?? 1),
+            location: $location,
         );
     }
 }
