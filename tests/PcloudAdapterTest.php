@@ -562,7 +562,7 @@ describe('getUrl', function () {
 
         $req = fakeRequest()
             ->onGet('getfilepublink', ['path' => '/root/image.jpg'], $publink)
-            ->onGet('getpublinkdownload', ['code' => 'abc123'], $download);
+            ->onGet('getpublinkdownload', ['code' => 'abc123', 'forcedownload' => 0], $download);
 
         $url = pcloudAdapter($req, '/root')->getUrl('image.jpg');
 
@@ -605,7 +605,7 @@ describe('getTemporaryUrl', function () {
                 'path' => '/root/image.jpg',
                 'expire' => $expiration->getTimestamp(),
             ], $publink)
-            ->onGet('getpublinkdownload', ['code' => 'tmp456'], $download);
+            ->onGet('getpublinkdownload', ['code' => 'tmp456', 'forcedownload' => 0], $download);
 
         $url = pcloudAdapter($req, '/root')->getTemporaryUrl('image.jpg', $expiration);
 

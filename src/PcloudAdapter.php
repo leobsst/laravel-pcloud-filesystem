@@ -50,7 +50,7 @@ class PcloudAdapter implements FilesystemAdapter
         $prefix = rtrim($this->root, '/') . '/';
 
         if (str_starts_with($fullPath, $prefix)) {
-            return substr($fullPath, strlen($prefix));
+            return substr($fullPath, \strlen($prefix));
         }
 
         return ltrim($fullPath, '/');
@@ -141,7 +141,7 @@ class PcloudAdapter implements FilesystemAdapter
         $upload = $this->request->get('upload_create');
         $uploadId = $upload->uploadid;
         $partSize = 10485760; // 10 MB
-        $total = strlen($contents);
+        $total = \strlen($contents);
         $offset = 0;
 
         if ($total === 0) {
@@ -150,7 +150,7 @@ class PcloudAdapter implements FilesystemAdapter
             while ($offset < $total) {
                 $chunk = substr($contents, $offset, $partSize);
                 $this->request->put('upload_write', $chunk, ['uploadid' => $uploadId, 'uploadoffset' => $offset]);
-                $offset += strlen($chunk);
+                $offset += \strlen($chunk);
             }
         }
 
@@ -201,7 +201,10 @@ class PcloudAdapter implements FilesystemAdapter
     {
         try {
             $publink = $this->request->get('getfilepublink', ['path' => $this->fullPath($path)]);
-            $download = $this->request->get('getpublinkdownload', ['code' => $publink->code]);
+            $download = $this->request->get('getpublinkdownload', [
+                'code' => $publink->code,
+                'forcedownload' => 0,
+            ]);
 
             return 'https://' . $download->hosts[0] . $download->path;
         } catch (Throwable $e) {
@@ -216,7 +219,10 @@ class PcloudAdapter implements FilesystemAdapter
                 'path' => $this->fullPath($path),
                 'expire' => $expiration->getTimestamp(),
             ]);
-            $download = $this->request->get('getpublinkdownload', ['code' => $publink->code]);
+            $download = $this->request->get('getpublinkdownload', [
+                'code' => $publink->code,
+                'forcedownload' => 0,
+            ]);
 
             return 'https://' . $download->hosts[0] . $download->path;
         } catch (Throwable $e) {
@@ -305,7 +311,7 @@ class PcloudAdapter implements FilesystemAdapter
         } catch (Throwable $e) {
             throw UnableToReadFile::fromLocation($path, $e->getMessage(), $e);
         } finally {
-            if (is_resource($stream)) {
+            if (\is_resource($stream)) {
                 fclose($stream);
             }
         }
@@ -324,7 +330,7 @@ class PcloudAdapter implements FilesystemAdapter
 
             $stream = fopen($url, 'rb', false, $context);
 
-            if (! is_resource($stream)) {
+            if (! \is_resource($stream)) {
                 throw new \RuntimeException('Failed to open stream from: ' . $url);
             }
 
