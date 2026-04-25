@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
 foreach (config('filesystems.disks', []) as $diskName => $diskConfig) {
-    if (($diskConfig['driver'] ?? '') !== 'pcloud') {
+    if (($diskConfig['driver'] ?? '') !== 'pcloud' || isset($diskConfig['url'])) {
         continue;
     }
 
