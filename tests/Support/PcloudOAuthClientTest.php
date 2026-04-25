@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Http;
+use Leobsst\LaravelPcloudFilesystem\Enums\LocationEnum;
 use Leobsst\LaravelPcloudFilesystem\Support\OAuthResult;
 use Leobsst\LaravelPcloudFilesystem\Support\PcloudOAuthClient;
 
@@ -35,14 +36,14 @@ describe('PcloudOAuthClient', function () {
                 ]),
             ]);
 
-            $result = (new PcloudOAuthClient)->fetchToken('cid', 'csecret', 'authcode', locationId: 1);
+            $result = (new PcloudOAuthClient)->fetchToken('cid', 'csecret', 'authcode', location: LocationEnum::EU);
 
             expect($result)->toBeInstanceOf(OAuthResult::class);
             expect($result->accessToken)->toBe('tok_abc');
-            expect($result->locationId)->toBe(2);
+            expect($result->location)->toBe(LocationEnum::EU);
         });
 
-        it('defaults locationId to 1 when absent from response', function () {
+        it('defaults location to 1 when absent from response', function () {
             Http::fake([
                 'api.pcloud.com/oauth2_token*' => Http::response([
                     'result' => 0,
@@ -50,37 +51,37 @@ describe('PcloudOAuthClient', function () {
                 ]),
             ]);
 
-            $result = (new PcloudOAuthClient)->fetchToken('cid', 'csecret', 'code', locationId: 1);
+            $result = (new PcloudOAuthClient)->fetchToken('cid', 'csecret', 'code', location: LocationEnum::US);
 
-            expect($result->locationId)->toBe(1);
+            expect($result->location)->toBe(LocationEnum::US);
         });
 
-        it('uses the US endpoint when locationId is 1', function () {
+        it('uses the US endpoint when location is 1', function () {
             Http::fake([
                 'api.pcloud.com/oauth2_token*' => Http::response(['result' => 0, 'access_token' => 'tok']),
             ]);
 
-            (new PcloudOAuthClient)->fetchToken('cid', 'csecret', 'code', locationId: 1);
+            (new PcloudOAuthClient)->fetchToken('cid', 'csecret', 'code', location: LocationEnum::US);
 
             Http::assertSent(fn ($request) => str_contains($request->url(), 'api.pcloud.com'));
         });
 
-        it('uses the EU endpoint when locationId is 2', function () {
+        it('uses the EU endpoint when location is 2', function () {
             Http::fake([
                 'eapi.pcloud.com/oauth2_token*' => Http::response(['result' => 0, 'access_token' => 'tok']),
             ]);
 
-            (new PcloudOAuthClient)->fetchToken('cid', 'csecret', 'code', locationId: 2);
+            (new PcloudOAuthClient)->fetchToken('cid', 'csecret', 'code', location: LocationEnum::EU);
 
             Http::assertSent(fn ($request) => str_contains($request->url(), 'eapi.pcloud.com'));
         });
 
-        it('falls back to the US endpoint for an unknown locationId', function () {
+        it('falls back to the US endpoint for an unknown location', function () {
             Http::fake([
                 'api.pcloud.com/oauth2_token*' => Http::response(['result' => 0, 'access_token' => 'tok']),
             ]);
 
-            (new PcloudOAuthClient)->fetchToken('cid', 'csecret', 'code', locationId: 99);
+            (new PcloudOAuthClient)->fetchToken('cid', 'csecret', 'code', location: LocationEnum::US);
 
             Http::assertSent(fn ($request) => str_contains($request->url(), 'api.pcloud.com'));
         });
@@ -90,7 +91,7 @@ describe('PcloudOAuthClient', function () {
                 'api.pcloud.com/oauth2_token*' => Http::response(null, 500),
             ]);
 
-            expect(fn () => (new PcloudOAuthClient)->fetchToken('cid', 'csecret', 'code'))
+            expect(fn () => (new PcloudOAuthClient)->fetchToken('cid', 'csecret', 'code', location: LocationEnum::US))
                 ->toThrow(RuntimeException::class, 'HTTP request');
         });
 
@@ -102,7 +103,7 @@ describe('PcloudOAuthClient', function () {
                 ]),
             ]);
 
-            expect(fn () => (new PcloudOAuthClient)->fetchToken('cid', 'csecret', 'code'))
+            expect(fn () => (new PcloudOAuthClient)->fetchToken('cid', 'csecret', 'code', location: LocationEnum::US))
                 ->toThrow(RuntimeException::class, 'Invalid client credentials.');
         });
 
@@ -114,7 +115,7 @@ describe('PcloudOAuthClient', function () {
                 ]),
             ]);
 
-            (new PcloudOAuthClient)->fetchToken('my-id', 'my-secret', 'my-code');
+            (new PcloudOAuthClient)->fetchToken('my-id', 'my-secret', 'my-code', location: LocationEnum::US);
 
             Http::assertSent(function ($request) {
                 return str_contains($request->url(), 'client_id=my-id')
