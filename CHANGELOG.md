@@ -2,6 +2,17 @@
 
 All notable changes to `laravel-pcloud-filesystem` will be documented in this file.
 
+## v1.0.5 - 2026-04-25
+
+### What's changed
+
+#### Improve middleware and provider
+
+- use LocationEnum instead of magic number
+- use DiskConfig dto to interact wtih file system disks configuration
+
+**Full Changelog**: https://github.com/leobsst/laravel-pcloud-filesystem/compare/v1.0.4...v1.0.5
+
 ## v1.0.4 - 2026-04-25
 
 ### Added
