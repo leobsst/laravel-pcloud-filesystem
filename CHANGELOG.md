@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-pcloud-filesystem` will be documented in this file.
 
+## v1.0.6 - 2026-04-26
+
+### Fixed
+
+* Wrong service provider condition
+
+**Full Changelog**: https://github.com/leobsst/laravel-pcloud-filesystem/compare/v1.0.5...v1.0.6
+
 ## v1.0.5 - 2026-04-25
 
 ### What's changed
