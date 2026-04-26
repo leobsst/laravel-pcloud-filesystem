@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use League\Flysystem\Config;
 use League\Flysystem\DirectoryAttributes;
 use League\Flysystem\FileAttributes;
@@ -83,9 +84,9 @@ function fakeRequest(): FakeRequest
     return new FakeRequest;
 }
 
-function pcloudAdapter(FakeRequest $req, string $root = '/'): PcloudAdapter
+function pcloudAdapter(FakeRequest $req, string $root = '/', ?string $url = null, ?string $routeName = null): PcloudAdapter
 {
-    return new PcloudAdapter($req, $root);
+    return new PcloudAdapter($req, $root, $url, $routeName);
 }
 
 function statResp(array $attrs): stdClass
@@ -552,6 +553,14 @@ describe('visibility', function () {
 });
 
 describe('getUrl', function () {
+    it('returns the proxy URL when a url is configured, without calling pCloud', function () {
+        $req = fakeRequest();
+
+        $url = pcloudAdapter($req, '/root', '/assets/uploads')->getUrl('pages/banners/image.webp');
+
+        expect($url)->toBe('/assets/uploads/pages/banners/image.webp');
+    });
+
     it('returns a direct file URL by chaining getfilepublink and getpublinkdownload', function () {
         $publink = new stdClass;
         $publink->code = 'abc123';
@@ -590,6 +599,21 @@ describe('getUrl', function () {
 });
 
 describe('getTemporaryUrl', function () {
+    it('returns a signed proxy URL when a route name is configured, without calling pCloud', function () {
+        Route::get('/assets/uploads/{path}', fn () => '')->where('path', '.*')->name('pcloud-filesystem.uploads');
+
+        $expiration = new DateTimeImmutable('+1 hour');
+        $req = fakeRequest();
+
+        $url = pcloudAdapter($req, '/root', '/assets/uploads', 'pcloud-filesystem.uploads')
+            ->getTemporaryUrl('pages/banners/image.webp', $expiration);
+
+        expect($url)
+            ->toContain('/assets/uploads/pages/banners/image.webp')
+            ->toContain('expires=')
+            ->toContain('signature=');
+    });
+
     it('passes the expiration timestamp to getfilepublink and returns a direct file URL', function () {
         $expiration = new DateTimeImmutable('2026-12-31 23:59:59', new DateTimeZone('UTC'));
 

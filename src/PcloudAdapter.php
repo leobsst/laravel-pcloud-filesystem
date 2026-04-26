@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Leobsst\LaravelPcloudFilesystem;
 
 use Generator;
+use Illuminate\Support\Facades\URL;
 use League\Flysystem\Config;
 use League\Flysystem\DirectoryAttributes;
 use League\Flysystem\FileAttributes;
@@ -32,10 +33,16 @@ class PcloudAdapter implements FilesystemAdapter
     /** @var array<string, int> */
     private array $folderIdCache = [];
 
-    public function __construct(Request $request, string $root = '/')
+    private ?string $url;
+
+    private ?string $routeName;
+
+    public function __construct(Request $request, string $root = '/', ?string $url = null, ?string $routeName = null)
     {
         $this->request = $request;
         $this->root = '/' . trim($root, '/');
+        $this->url = $url;
+        $this->routeName = $routeName;
     }
 
     private function fullPath(string $path): string
@@ -199,6 +206,10 @@ class PcloudAdapter implements FilesystemAdapter
 
     public function getUrl(string $path): string
     {
+        if ($this->url !== null) {
+            return rtrim($this->url, '/') . '/' . ltrim($path, '/');
+        }
+
         try {
             $publink = $this->request->get('getfilepublink', ['path' => $this->fullPath($path)]);
             $download = $this->request->get('getpublinkdownload', [
@@ -214,6 +225,14 @@ class PcloudAdapter implements FilesystemAdapter
 
     public function getTemporaryUrl(string $path, \DateTimeInterface $expiration, array $options = []): string
     {
+        if ($this->routeName !== null) {
+            return URL::temporarySignedRoute(
+                $this->routeName,
+                $expiration,
+                ['path' => $path],
+            );
+        }
+
         try {
             $publink = $this->request->get('getfilepublink', [
                 'path' => $this->fullPath($path),

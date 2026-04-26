@@ -52,7 +52,11 @@ class LaravelPcloudFilesystemServiceProvider extends PackageServiceProvider
                 continue;
             }
 
-            config(["filesystems.disks.{$diskName}.url" => '/assets/' . str($diskName)->slug()->toString()]);
+            $slug = str($diskName)->slug()->toString();
+            config([
+                "filesystems.disks.{$diskName}.url" => '/assets/' . $slug,
+                "filesystems.disks.{$diskName}.proxy_route" => 'pcloud-filesystem.' . $slug,
+            ]);
         }
 
         Storage::extend('pcloud', function (Application $app, array $config): FilesystemAdapter {
@@ -61,7 +65,7 @@ class LaravelPcloudFilesystemServiceProvider extends PackageServiceProvider
             $pcloudApp->setAccessToken($config['access_token'] ?? '');
             $pcloudApp->setLocationId($location->value);
 
-            $adapter = new PcloudAdapter(new Request($pcloudApp), $config['root'] ?? '/');
+            $adapter = new PcloudAdapter(new Request($pcloudApp), $config['root'] ?? '/', $config['url'] ?? null, $config['proxy_route'] ?? null);
             $filesystem = new Filesystem($adapter);
 
             return new FilesystemAdapter($filesystem, $adapter, $config);
