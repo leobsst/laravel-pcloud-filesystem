@@ -48,7 +48,7 @@ class LaravelPcloudFilesystemServiceProvider extends PackageServiceProvider
         foreach (config('filesystems.disks', []) as $diskName => $diskConfig) {
             $config = DiskConfig::fromConfig($diskName, $diskConfig);
 
-            if ($config->isPcloudDisk() || $config->hasUrl()) {
+            if (! $config->isPcloudDisk() || $config->hasUrl()) {
                 continue;
             }
 
