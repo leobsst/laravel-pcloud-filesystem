@@ -2,6 +2,43 @@
 
 All notable changes to `laravel-pcloud-filesystem` will be documented in this file.
 
+## v1.0.7 - 2026-04-26
+
+### Bug Fixes
+
+#### `url()` returns pCloud CDN URL instead of proxy URL
+
+`Storage::disk('uploads')->url($path)` retournait systématiquement une URL pCloud CDN directe
+(`https://eXXX.pcloud.com/…`) au lieu de l'URL proxy (`/assets/uploads/…`).
+
+**Cause** : Laravel's `FilesystemAdapter::url()` detects `getUrl()` on the adapter via
+`method_exists` and calls it with absolute priority, ignoring the `url` config key entirely.
+Additionally, the service provider had an inverted condition that prevented proxy URL injection
+for pCloud disks.
+
+**Fix** :
+
+- Corrected the inverted condition in `bootingPackage()` (`!isPcloudDisk()` instead of `isPcloudDisk()`)
+- The proxy URL is now passed to `PcloudAdapter` via the constructor
+- `getUrl()` returns the proxy URL directly when one is configured, falling back to the pCloud API otherwise
+
+#### `temporaryUrl()` generates IP-restricted pCloud CDN links
+
+`Storage::disk('uploads')->temporaryUrl($path, $expiration)` returned a pCloud-signed CDN URL
+that is restricted to the requesting IP address, causing broken links for users behind proxies,
+load balancers, or mobile networks.
+
+**Fix** :
+
+- Proxy routes are now named (`pcloud-filesystem.{disk-slug}`)
+- The route name is injected into disk config (`proxy_route`) and passed to `PcloudAdapter`
+- `getTemporaryUrl()` generates a Laravel signed URL via `URL::temporarySignedRoute()` when a
+  proxy route is configured, routing through the application instead of pCloud CDN
+- The proxy route validates the signature only when an `expires` parameter is present — unsigned
+  access via `url()` continues to work normally; tampered or expired signed URLs return 403
+
+**Full Changelog**: https://github.com/leobsst/laravel-pcloud-filesystem/compare/v1.0.6...v1.0.7
+
 ## v1.0.6 - 2026-04-26
 
 ### Fixed
