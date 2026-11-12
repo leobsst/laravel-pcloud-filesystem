@@ -10,6 +10,7 @@ use League\Flysystem\Config;
 use League\Flysystem\DirectoryAttributes;
 use League\Flysystem\FileAttributes;
 use League\Flysystem\FilesystemAdapter;
+use League\Flysystem\PathTraversalDetected;
 use League\Flysystem\UnableToCopyFile;
 use League\Flysystem\UnableToCreateDirectory;
 use League\Flysystem\UnableToDeleteDirectory;
@@ -37,19 +38,77 @@ class PcloudAdapter implements FilesystemAdapter
 
     private ?string $routeName;
 
-    public function __construct(Request $request, string $root = '/', ?string $url = null, ?string $routeName = null)
+    private bool $verifySsl;
+
+    public function __construct(Request $request, string $root = '/', ?string $url = null, ?string $routeName = null, bool $verifySsl = true)
     {
         $this->request = $request;
         $this->root = '/' . trim($root, '/');
         $this->url = $url;
         $this->routeName = $routeName;
+        $this->verifySsl = $verifySsl;
     }
 
+    /**
+     * Whether a relative path stays inside the disk root
+     * (no "." / ".." segment, no backslash, no NUL byte).
+     */
+    public static function isSafePath(string $path): bool
+    {
+        if (str_contains($path, '\\') || str_contains($path, "\0")) {
+            return false;
+        }
+
+        foreach (explode('/', trim($path, '/')) as $segment) {
+            if ($segment === '.' || $segment === '..') {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @throws PathTraversalDetected when the path would escape the disk root
+     */
     private function fullPath(string $path): string
     {
+        if (! self::isSafePath($path)) {
+            throw PathTraversalDetected::forPath($path);
+        }
+
         $path = ltrim($path, '/');
 
         return $path === '' ? $this->root : rtrim($this->root, '/') . '/' . $path;
+    }
+
+    /**
+     * Every file attribute from a single pCloud `stat` call.
+     *
+     * @return array{size: int|null, mime_type: string|null, last_modified: int|null, hash: string|null}
+     *
+     * @throws UnableToRetrieveMetadata
+     */
+    public function metadata(string $path): array
+    {
+        try {
+            $metadata = $this->stat($this->fullPath($path));
+        } catch (Throwable $e) {
+            throw UnableToRetrieveMetadata::create($path, 'metadata', $e->getMessage(), $e);
+        }
+
+        if ($metadata->isfolder ?? false) {
+            throw UnableToRetrieveMetadata::create($path, 'metadata', 'Path is a directory.');
+        }
+
+        $modified = isset($metadata->modified) ? strtotime((string) $metadata->modified) : false;
+
+        return [
+            'size' => isset($metadata->size) ? (int) $metadata->size : null,
+            'mime_type' => $metadata->contenttype ?? null,
+            'last_modified' => $modified !== false ? $modified : null,
+            'hash' => isset($metadata->hash) ? (string) $metadata->hash : null,
+        ];
     }
 
     private function relativePath(string $fullPath): string
@@ -343,8 +402,9 @@ class PcloudAdapter implements FilesystemAdapter
             $response = $this->request->get('getfilelink', ['path' => $fullPath]);
             $url = 'https://' . $response->hosts[0] . $response->path;
 
+            // TLS is verified unless explicitly disabled on the disk ('verify_ssl' => false).
             $context = stream_context_create([
-                'ssl' => ['verify_peer' => false, 'verify_peer_name' => false],
+                'ssl' => ['verify_peer' => $this->verifySsl, 'verify_peer_name' => $this->verifySsl],
             ]);
 
             $stream = fopen($url, 'rb', false, $context);

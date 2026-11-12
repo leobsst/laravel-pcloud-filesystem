@@ -101,6 +101,25 @@ This produces `BACKUP_PCLOUD_ACCESS_TOKEN`, `BACKUP_PCLOUD_LOCATION_ID`, and `BA
 
 The `root` option scopes all filesystem operations to that pCloud folder. For example, setting `root` to `/MyApp` means `Storage::disk('pcloud')->put('uploads/file.txt', ...)` will write to `/MyApp/uploads/file.txt` on pCloud. Missing intermediate directories are created automatically.
 
+### Proxy URLs, security and caching
+
+When a pCloud disk has no `url`, the package serves its files through the application at `/assets/<disk>/<path>` (this is what `url()` and `temporaryUrl()` return). Optional disk keys:
+
+```php
+'pcloud' => [
+    // ...
+    'visibility'         => 'private', // only signed URLs (temporaryUrl) are served; default: public
+    'proxy_max_age'      => 86400,     // browser Cache-Control max-age for public files (seconds)
+    'proxy_metadata_ttl' => 300,       // server-side cache of file metadata (seconds, 0 = disabled)
+    'verify_ssl'         => true,      // verify TLS when downloading from pCloud (keep enabled)
+],
+```
+
+- A URL carrying a signature (`expires` / `signature`) is always verified; a forged or stripped one gets a 403.
+- Paths containing `.` / `..` segments, backslashes or NUL bytes are rejected (404): a disk never reaches outside its `root`.
+- Responses carry `ETag`, `Last-Modified` and `Cache-Control`: browsers revalidate with a 304 without the file being downloaded from pCloud again.
+- Only types that cannot run scripts (images except SVG, PDF, audio/video, plain text) are rendered inline; anything else (SVG, HTML...) is sent as a download with `X-Content-Type-Options: nosniff`.
+
 ## Usage
 
 Once configured, use the disk exactly like any other Laravel filesystem disk:

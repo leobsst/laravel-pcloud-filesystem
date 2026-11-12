@@ -65,7 +65,13 @@ class LaravelPcloudFilesystemServiceProvider extends PackageServiceProvider
             $pcloudApp->setAccessToken($config['access_token'] ?? '');
             $pcloudApp->setLocationId($location->value);
 
-            $adapter = new PcloudAdapter(new Request($pcloudApp), $config['root'] ?? '/', $config['url'] ?? null, $config['proxy_route'] ?? null);
+            $adapter = new PcloudAdapter(
+                new Request($pcloudApp),
+                $config['root'] ?? '/',
+                $config['url'] ?? null,
+                $config['proxy_route'] ?? null,
+                (bool) ($config['verify_ssl'] ?? true),
+            );
             $filesystem = new Filesystem($adapter);
 
             return new FilesystemAdapter($filesystem, $adapter, $config);
