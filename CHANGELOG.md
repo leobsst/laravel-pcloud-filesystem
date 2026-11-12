@@ -2,6 +2,35 @@
 
 All notable changes to `laravel-pcloud-filesystem` will be documented in this file.
 
+## v1.1.0 - 2026-11-12
+
+### What's changed
+
+#### New features
+
+- New optional disk keys for the proxy route (`/assets/<disk>/<path>`) ([3040bd6](https://github.com/leobsst/laravel-pcloud-filesystem/commit/3040bd6)):
+  - `visibility` (`private` serves signed URLs only);
+  - `proxy_max_age` (browser `Cache-Control`, default 86400 s);
+  - `proxy_metadata_ttl` (server-side metadata cache, default 300 s);
+  - `verify_ssl` (default `true`).
+  
+- The proxy now sends `ETag`, `Last-Modified` and `Cache-Control`: repeated views end in a `304` without downloading the file from pCloud again, and file metadata comes from a single cached `stat` call (`PcloudAdapter::metadata()`). ([3040bd6](https://github.com/leobsst/laravel-pcloud-filesystem/commit/3040bd6))
+
+#### Refactoring
+
+- The proxy route closure was replaced by an invokable `ProxyController`. ([3040bd6](https://github.com/leobsst/laravel-pcloud-filesystem/commit/3040bd6))
+- **Breaking:** dropped Laravel 11 support. The package now requires `illuminate/*` `^12.0||^13.0`, because every Laravel 11 release is blocked by Composer security advisories. ([c1fc5d3](https://github.com/leobsst/laravel-pcloud-filesystem/commit/c1fc5d3))
+- Bumped `actions/checkout` from 6 to 7.
+
+#### Fixes
+
+- Security: a signed URL is always verified, so stripping or forging the `expires` / `signature` parameters no longer gives access to the file. ([3040bd6](https://github.com/leobsst/laravel-pcloud-filesystem/commit/3040bd6))
+- Security: paths with `.` / `..` segments, backslashes or NUL bytes are rejected by both the proxy and `PcloudAdapter`, so a disk can no longer reach outside its `root`. ([3040bd6](https://github.com/leobsst/laravel-pcloud-filesystem/commit/3040bd6))
+- Security: TLS certificates are verified again when streaming files from pCloud. ([3040bd6](https://github.com/leobsst/laravel-pcloud-filesystem/commit/3040bd6))
+- Security: SVG, HTML and other types that could run scripts are served as downloads with `X-Content-Type-Options: nosniff`. ([3040bd6](https://github.com/leobsst/laravel-pcloud-filesystem/commit/3040bd6))
+
+**Full Changelog**: https://github.com/leobsst/laravel-pcloud-filesystem/compare/v1.0.7...v1.1.0
+
 ## v1.0.7 - 2026-04-26
 
 ### Bug Fixes
