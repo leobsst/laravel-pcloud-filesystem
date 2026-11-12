@@ -13,7 +13,7 @@ A [Laravel](https://laravel.com) filesystem driver for [pCloud](https://www.pclo
 ## Requirements
 
 - PHP 8.2+
-- Laravel 11, 12, or 13
+- Laravel 12 or 13
 
 ## Installation
 
